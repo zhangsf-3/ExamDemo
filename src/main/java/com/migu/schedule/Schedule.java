@@ -87,10 +87,8 @@ public class Schedule {
         	 //任务id已经存在
         	 return ReturnCodeKeys.E010;
          }
-         NodeInfo  node = nodes.get(0);
-    	TaskInfo taskInfo = new  TaskInfo(taskId,HangupFlag,consumption);
+    	TaskInfo taskInfo = new  TaskInfo(taskId,HangupFlag,consumption);	
     	
-    	node.addTaskInfo(taskInfo);
     	taskInfos.add(taskInfo);
     	// 任务添加成功
         return ReturnCodeKeys.E008;
@@ -119,8 +117,30 @@ public class Schedule {
 
 
     public int scheduleTask(int threshold) {
-        // TODO 方法未实现
-        return ReturnCodeKeys.E013;
+    	
+    	if(!checkThreshold(threshold)) 
+    	{
+    		return ReturnCodeKeys.E002;
+    	}
+    	//如果任务数能平均分配到各个节点，且负载相同
+    	if(checkSplit() && checkSplitTasks()) 
+    	{
+    		return ReturnCodeKeys.E013;
+    	}
+    	// 负载能均匀分配
+    	else if(checkSplit())
+    	{
+    		return ReturnCodeKeys.E013;
+    	}
+    	// 分配后节点差值大于threshold
+    	else if(!checkNodeThreshold(threshold)) 
+    	{
+    		return ReturnCodeKeys.E015;
+    	}
+    	else 
+    	{
+    		return ReturnCodeKeys.E013;
+    	}
     }
 
 
@@ -251,5 +271,50 @@ public class Schedule {
     		}
     	}
     }
+    
+    //任务能够平分
+    private  boolean  checkSplit() 
+    {
+    	int  sumload =sumload();
+    	return  sumload%nodes.size()==0;
+    }
+    
+    //各个节点可以分配相同的任务数
+    private  boolean  checkSplitTasks() 
+    {
+    	return  taskInfos.size()%nodes.size()==0;
+    }
+    
+    
+    private int sumload()
+    {
+    	int sumload = 0;
+    	for(TaskInfo t :taskInfos)
+    	{
+    		sumload= sumload+t.getConsumption();
+    	}
+    	return sumload;
+    }
+    
+    
+   private  boolean  checkNodeThreshold(int threshold) 
+   {
+	   for (int i = 0; i <nodes.size(); i++) {
+		   NodeInfo  temp= nodes.get(i);
+           for (int j = 1; i <nodes.size(); j++) { 
+        	  return !(Math.abs(temp.getLoadNum()-nodes.get(j).getLoadNum())>=10);
+           }  
+	   }
+	   return  Boolean.TRUE;
+   }
+   
+   private  boolean  checkThreshold(int threshold) 
+   {
+	   if(threshold<=0)
+	   return  Boolean.FALSE;
+	   else
+	  return  Boolean.TRUE;  
+   }
+   
     
 }
